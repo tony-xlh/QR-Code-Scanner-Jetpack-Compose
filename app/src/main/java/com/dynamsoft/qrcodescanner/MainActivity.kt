@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity() {
                     onResult = { granted ->
                         hasCameraPermission = granted
                         if (granted == true) {
-                            initDBR()
+                            startScanning()
                             mCameraEnhancer.open()
                         }
                     }
@@ -88,20 +88,23 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun initDBR(){
-        try {
-            Log.d("DBR","new instance of DBR")
-            // Create an instance of Dynamsoft Barcode Reader.
-            mBarcodeReader = BarcodeReader()
-            // Bind the Camera Enhancer instance to the Barcode Reader instance to get frames from camera.
-            mBarcodeReader.setCameraEnhancer(mCameraEnhancer)
-            mBarcodeReader.setTextResultListener { id, imageData, textResults ->
-                Log.d("DBR",textResults.size.toString())
+    private fun startScanning(){
+        if (mBarcodeReader == null) {
+            try {
+                Log.d("DBR", "new instance of DBR")
+                // Create an instance of Dynamsoft Barcode Reader.
+                mBarcodeReader = BarcodeReader()
+                // Bind the Camera Enhancer instance to the Barcode Reader instance to get frames from camera.
+                mBarcodeReader.setCameraEnhancer(mCameraEnhancer)
+                mBarcodeReader.setTextResultListener { id, imageData, textResults ->
+                    Log.d("DBR", textResults.size.toString())
+                }
+
+            } catch (e: BarcodeReaderException) {
+                e.printStackTrace()
             }
-            mBarcodeReader.startScanning()
-        } catch (e: BarcodeReaderException) {
-            e.printStackTrace()
         }
+        mBarcodeReader.startScanning()
     }
 }
 
