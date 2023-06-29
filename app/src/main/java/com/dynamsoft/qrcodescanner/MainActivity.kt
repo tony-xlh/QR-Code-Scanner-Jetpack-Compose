@@ -23,6 +23,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.dynamsoft.dbr.BarcodeReader
 import com.dynamsoft.dbr.BarcodeReaderException
+import com.dynamsoft.dbr.TextResult
 import com.dynamsoft.dce.CameraEnhancer
 import com.dynamsoft.dce.DCECameraView
 import com.dynamsoft.qrcodescanner.ui.theme.QRCodeScannerTheme
@@ -57,7 +58,7 @@ class MainActivity : ComponentActivity() {
                         hasCameraPermission = granted
                         if (granted == true) {
                             startScanning() { result ->
-                                barcodeTextResult = result
+                                barcodeTextResult = result.barcodeFormatString+": "+result.barcodeText
                             }
                             mCameraEnhancer.open()
                         }
@@ -118,12 +119,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun startScanning(scanned:(String) -> Unit){
+    private fun startScanning(scanned:(TextResult) -> Unit){
         try{
             mBarcodeReader.setTextResultListener { id, imageData, textResults ->
                 //Log.d("DBR", textResults.size.toString())
                 if (textResults.size>0) {
-                    scanned(textResults[0].barcodeText)
+                    scanned(textResults[0])
                 }
             }
             mBarcodeReader.startScanning()
