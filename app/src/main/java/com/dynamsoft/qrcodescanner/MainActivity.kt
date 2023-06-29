@@ -10,13 +10,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.dynamsoft.dbr.BarcodeReader
@@ -35,6 +37,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             QRCodeScannerTheme {
                 val context = LocalContext.current
+
+                var barcodeTextResult by remember {
+                    mutableStateOf("")
+                }
+
                 var hasCameraPermission by remember {
                     mutableStateOf(
                         ContextCompat.checkSelfPermission(
@@ -43,37 +50,49 @@ class MainActivity : ComponentActivity() {
                         ) == PackageManager.PERMISSION_GRANTED
                     )
                 }
+
                 val launcher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
                     onResult = { granted ->
                         hasCameraPermission = granted
                         if (granted == true) {
-                            startScanning()
+                            startScanning() { result ->
+                                barcodeTextResult = result
+                            }
                             mCameraEnhancer.open()
                         }
                     }
                 )
+
                 LaunchedEffect(key1 = true){
                     initLicense()
+                    initDBR()
                     launcher.launch(Manifest.permission.CAMERA)
                 }
+
                 // A surface container using the 'background' color from the theme
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
-                    Column(
-                        modifier = Modifier.fillMaxSize()
-                    ){
-                        AndroidView(factory = {context ->
-                            mCameraEnhancer = CameraEnhancer(context.findActivity())
-                            val mCameraView: DCECameraView
-                            mCameraView = DCECameraView(context)
-                            mCameraView.overlayVisible = true
-                            mCameraEnhancer.cameraView = mCameraView
-                            mCameraView
-                        })
-                    }
+                    AndroidView(factory = {context ->
+                        mCameraEnhancer = CameraEnhancer(context.findActivity())
+                        val mCameraView: DCECameraView
+                        mCameraView = DCECameraView(context)
+                        mCameraView.overlayVisible = true
+                        mCameraEnhancer.cameraView = mCameraView
+                        mCameraView
+                    })
+                    BarcodeText(text = barcodeTextResult)
                 }
             }
         }
+    }
+
+    @Composable
+    fun BarcodeText(text:String) {
+        Text(
+            text = text,
+            color = Color.White,
+            fontSize = 20.sp
+        )
     }
 
     private fun initLicense(){
@@ -88,23 +107,29 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun startScanning(){
-        if (mBarcodeReader == null) {
-            try {
-                Log.d("DBR", "new instance of DBR")
-                // Create an instance of Dynamsoft Barcode Reader.
-                mBarcodeReader = BarcodeReader()
-                // Bind the Camera Enhancer instance to the Barcode Reader instance to get frames from camera.
-                mBarcodeReader.setCameraEnhancer(mCameraEnhancer)
-                mBarcodeReader.setTextResultListener { id, imageData, textResults ->
-                    Log.d("DBR", textResults.size.toString())
-                }
-
-            } catch (e: BarcodeReaderException) {
-                e.printStackTrace()
-            }
+    private fun initDBR(){
+        try {
+            // Create an instance of Dynamsoft Barcode Reader.
+            mBarcodeReader = BarcodeReader()
+            // Bind the Camera Enhancer instance to the Barcode Reader instance to get frames from camera.
+            mBarcodeReader.setCameraEnhancer(mCameraEnhancer)
+        }catch (e: BarcodeReaderException){
+            e.printStackTrace()
         }
-        mBarcodeReader.startScanning()
+    }
+
+    private fun startScanning(scanned:(String) -> Unit){
+        try{
+            mBarcodeReader.setTextResultListener { id, imageData, textResults ->
+                //Log.d("DBR", textResults.size.toString())
+                if (textResults.size>0) {
+                    scanned(textResults[0].barcodeText)
+                }
+            }
+            mBarcodeReader.startScanning()
+        } catch (e: BarcodeReaderException) {
+            e.printStackTrace()
+        }
     }
 }
 
