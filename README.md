@@ -9,5 +9,7 @@ https://github.com/tony-xlh/QR-Code-Scanner-Jetpack-Compose/assets/5462205/84ec8
 * [Dynamsoft Camera Enhancer](https://www.dynamsoft.com/camera-enhancer/docs/introduction/index.html). An SDK which makes it easy to use camera on mobile platforms.
 * [Dynamsoft Barcode Reader](https://www.dynamsoft.com/barcode-reader/overview/). An SDK to read barcodes and QR codes with great [performance](https://www.dynamsoft.com/codepool/qr-code-reading-benchmark-and-comparison.html).
 
+## Blog
 
+[How to Create a QR Code Scanner in Jetpack Compose](https://www.dynamsoft.com/codepool/qr-code-scanner-in-jetpack-compose.html)
 
